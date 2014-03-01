@@ -69,18 +69,11 @@ public class MainActivity extends Activity implements OnClickListener {
                 String setServerString = client.execute (get, responseHandler);
                 Log.i ("Mainactivity", "Server rsp: " + setServerString);
       
-                 // Show response on activity 
+                // Show response on activity 
 
                 //content.setText(SetServerString);
 			} catch (Exception e) {
 				e.printStackTrace ();
-			}
-			
-			try {
-				Thread.sleep (500);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 			
 			Log.i ("Mainactivity", "I am a worker:" + params[0]);
@@ -158,7 +151,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 	
 	@Override
-	public void onActivityResult(int reqCode, int resultCode, Intent data) {
+	public void onActivityResult (int reqCode, int resultCode, Intent data) {
 		super.onActivityResult(reqCode, resultCode, data);
 		Log.i ("Mainactivity", "return from activity");
 	}
