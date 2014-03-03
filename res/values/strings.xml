@@ -6,5 +6,6 @@
     <string name="hello_world">Hello world!</string>
     <string name="searchString">Search</string>
     <string name="contactString">Contact</string>
+    <string name="title_activity_grid_list">GridListActivity</string>
 
 </resources>
