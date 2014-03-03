@@ -10,8 +10,12 @@ import android.util.Xml;
 public class XmlParser {
 	
 	static final String M_LOG_TAG = "@lfred_xml";
+	static int m_photoCounter = 0;
 
 	static public boolean parseXml (InputStream in) {
+		
+		Log.i (M_LOG_TAG, "Begin to parse XML");
+		
 		try {
 			XmlPullParser parser = Xml.newPullParser();
         	parser.setFeature (XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -37,6 +41,7 @@ public class XmlParser {
 	        if (relType.equals ("ok") == false) 
 	        	return false;
 	        
+	        m_photoCounter = 0;
 	        parser.nextTag (); 
 	        return readHeader (parser);
 	    }
@@ -65,14 +70,16 @@ public class XmlParser {
 		}
 		
 	    while (parser.next () != XmlPullParser.END_TAG) {
+	    	
 	        if (parser.getEventType() != XmlPullParser.START_TAG) {
 	            continue;
 	        }
 	        String name = parser.getName ();
 	        
 	        // Starts by looking for the entry tag
-	        if (name.equals("photo")) {
-	            readPhoto (parser);
+	        if (name.equals ("photo")) {	
+	        	readPhoto (parser);		
+	        	parser.nextTag ();
 	        } else {
 	            skip (parser);
 	        }
@@ -82,32 +89,17 @@ public class XmlParser {
 	}
 	
 	static public boolean readPhoto (XmlPullParser parser) throws Exception {
-		
+	
 		parser.require (XmlPullParser.START_TAG, null, "photo");
 		
-		while (parser.next() != XmlPullParser.END_TAG) {
-	        if (parser.getEventType() != XmlPullParser.START_TAG) {
-	            continue;
-	        }
-	        	        
-	        String tag = parser.getName ();
-	        
-			if (tag.equals ("photo")) {
-				String id    	= parser.getAttributeValue (null, "id");
-				String secret   = parser.getAttributeValue (null, "secret");
-				String server 	= parser.getAttributeValue (null, "server");
-				String farm   	= parser.getAttributeValue (null, "farm");
-				
-				Log.i (M_LOG_TAG, "Flickr says - photos : " + id + ":" + secret + ":" + server + ":" + farm);
-				
-				//searchRepo repo = searchRepo.getRepo ();
-				//repo.setXmlStat (
-				//	Integer.parseInt (total), 
-				//	Integer.parseInt (pages), 
-				//	Integer.parseInt (page), 
-				//	Integer.parseInt (perPage));
-			}
-	    }
+    	String id    	= parser.getAttributeValue (null, "id");
+		String secret   = parser.getAttributeValue (null, "secret");
+		String server 	= parser.getAttributeValue (null, "server");
+		String farm   	= parser.getAttributeValue (null, "farm");				
+		Log.i (M_LOG_TAG, "Flickr says - photos : " + id + ":" + secret + ":" + server + ":" + farm);
+		
+		addUrlForThumbNail (id, secret, server, farm);
+		//parser.require (XmlPullParser.END_TAG, null, "photo");
 		
 		return true;
 	}
@@ -131,6 +123,14 @@ public class XmlParser {
 	        }
 	    }
 		return true;
+	}
+	
+	static public void addUrlForThumbNail (String id, String secret, String server, String farm) {
+		
+		String url = "http://farm" + farm + ".staticflickr.com/" + server + "/" + id + "_" + secret + "_m.jpg";
+		searchRepo.getRepo ().addNewUrl (url, m_photoCounter);
+		m_photoCounter++;
+		return;
 	}
 	
 }

@@ -12,6 +12,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import android.util.*;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.provider.*;
@@ -23,8 +24,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.*;
-
-import org.xmlpull.v1.XmlPullParser;
 
 // Sample code: show image from internet in the image viewer
 // Note: Need user permission -> INTERNET
@@ -38,20 +37,11 @@ public class MainActivity extends Activity implements OnClickListener {
 	final static int 	M_REQCODE_CONTACT = 1;
 	final static String M_LOG_TAG = "@lfred_main";
 	
-	final static String m_searchUrl_1 = 
-			"http://api.flickr.com/services/rest/?method=flickr.photos.search&" + 
-			"api_key=278c507b03fa3a089af0a5972f83a8e4&tags=";
 	
-	final static String m_searchUrl_2 = 	
-			"&extras=date_taken,owner_name,description";
 	
 	static ProgressDialog	m_progDialog;
 	static searchRepo		m_repo;
 	static MainActivity		m_myself;
-	
-	public static String flickrUrlBuilder (String tag) {
-		return new String (m_searchUrl_1 + tag + m_searchUrl_2);
-	}
 	
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
@@ -108,7 +98,8 @@ public class MainActivity extends Activity implements OnClickListener {
 				// @lfred: create an intent to open the contact windows
 				Intent it = new Intent (Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
 				startActivityForResult (it, M_REQCODE_CONTACT);
-			} break;
+			} 
+			break;
 			
 			default:
 				Log.i (M_LOG_TAG, "unknown button is pressed");
@@ -180,10 +171,10 @@ public class MainActivity extends Activity implements OnClickListener {
 		m_progDialog.setCancelable (false);
 			
 		// start the worker thread
-		new WorkThread ().execute (key);
+		new WorkThread (this).execute (key);
 	}
 	
-	void openGridList () {
+	public void openGridList () {
 		
 		Log.i (M_LOG_TAG, "Start gridview");
 		
@@ -195,18 +186,23 @@ public class MainActivity extends Activity implements OnClickListener {
 	// @lfred inner working class
 	private static class WorkThread extends AsyncTask<String, Void, Integer> {
 		
+		MainActivity ctx;
+		
+	    private WorkThread (MainActivity act) {
+	    	ctx = act;
+	    }
+		
 		// @lfred: this will be called in the UI thread.
 		@Override
 		protected void onPostExecute (Integer result) {
 			
-				
 			Log.i (M_LOG_TAG, "WorkThread: onPostExecute");
 			MainActivity.m_progDialog.dismiss ();
 			
 			if (result.intValue() != 0) {
 				Log.i (M_LOG_TAG, "onPostExecute - error");
 			} else {
-				//openGridList ();
+				ctx.openGridList ();
 			}
 				
 			return;
@@ -257,11 +253,9 @@ public class MainActivity extends Activity implements OnClickListener {
 			    //parseXml (new File)
 			    FileInputStream fin = new FileInputStream (tempPath);
 			    XmlParser.parseXml (fin); 
-			    fin.close ();
+			    fin.close ();  
 			    
-			    // Step 2: parsing the XML file
-			    // Step 2.1: read <photos ... >
-			    // Step 2.2: read <photo id>, <farm id>, <server_id>, <secret>
+			    // load first 30 images
 			    
 				
 			} catch (Exception e) {
@@ -276,13 +270,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		
 		String makeUrl (String... params) {
 			
-			String searchKeyWords = new String (params[0]);
-			
-			for (int i=1; i<params.length; ++i)
-				searchKeyWords = searchKeyWords + "," + params[i];
-			
-			String url = m_searchUrl_1 + searchKeyWords + m_searchUrl_2;
-			
+			String url = searchRepo.getRepo ().generateSearchUri (params);
 			Log.i (M_LOG_TAG, "the query URL: " + url);
 			return url;
 		}			
