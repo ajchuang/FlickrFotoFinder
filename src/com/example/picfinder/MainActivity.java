@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.*;
+import java.util.StringTokenizer;
 
 // Sample code: show image from internet in the image viewer
 // Note: Need user permission -> INTERNET
@@ -37,15 +38,12 @@ public class MainActivity extends Activity implements OnClickListener {
 	final static int 	M_REQCODE_CONTACT = 1;
 	final static String M_LOG_TAG = "@lfred_main";
 	
-	
-	
 	static ProgressDialog	m_progDialog;
 	static searchRepo		m_repo;
-	static MainActivity		m_myself;
 	
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+		super.onCreate (savedInstanceState);
 		
 		setContentView(R.layout.activity_main);
 		
@@ -57,11 +55,10 @@ public class MainActivity extends Activity implements OnClickListener {
 		
 		// @lfred: get the repo
 		m_repo = searchRepo.getRepo ();
-		m_myself = this;
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
+	public boolean onCreateOptionsMenu (Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater ().inflate (R.menu.main, menu);
 		return true;
@@ -77,17 +74,25 @@ public class MainActivity extends Activity implements OnClickListener {
 			case R.id.searchBtn: {
 				
 				Log.i (M_LOG_TAG, "search button clicked");
+				searchRepo.getRepo ().resetRepo ();
 				
 				EditText text = (EditText) findViewById (R.id.keywordText);
 				String keyword = text.getText ().toString ();
-				
 				Log.i (M_LOG_TAG, keyword);
+				
 				
 				if (keyword.length () == 0) {
 					Toast t  = Toast.makeText (MainActivity.this, "Empty Keyword", Toast.LENGTH_LONG);
 					t.show ();
 				} else {
-					startSearchTask (keyword);
+					
+					// tokenizer
+					StringTokenizer st = new StringTokenizer (keyword); 
+					while (st.hasMoreTokens ()) {
+				         searchRepo.getRepo ().setKeyword (st.nextToken ().trim());
+				    }
+					
+					openGridList ();
 				}
 			} 
 			break;
@@ -104,7 +109,6 @@ public class MainActivity extends Activity implements OnClickListener {
 			default:
 				Log.i (M_LOG_TAG, "unknown button is pressed");
 			break;
-		
 		}
 	}
 	
@@ -124,6 +128,9 @@ public class MainActivity extends Activity implements OnClickListener {
 			} else {
 				
 				if (data != null) {
+					// @lfred: clear the repo
+					searchRepo.getRepo ().resetRepo ();
+					
 		            Uri u = data.getData ();
 		            Log.i (M_LOG_TAG, "URI: " + u.toString ());
 		            
@@ -147,7 +154,9 @@ public class MainActivity extends Activity implements OnClickListener {
 		                Log.i (M_LOG_TAG, "Contact id  : " + id);
 		                Log.i (M_LOG_TAG, "Contact Name: " + name);
 		                Log.i (M_LOG_TAG, "Contact hasPhone: " + hasPhone);
-		                startSearchTask (name);
+		                //startSearchTask (name);
+		                searchRepo.getRepo ().setKeyword (name);
+		                openGridList ();
 		            }
 		            
 				} else {
@@ -165,6 +174,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		Log.i (M_LOG_TAG, "return from activity");
 	}
 	
+	/*
 	void startSearchTask (String key) {
 		m_progDialog = 
 			ProgressDialog.show (MainActivity.this, "Please wait ...", "Searching Data ...", true);					
@@ -173,6 +183,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		// start the worker thread
 		new WorkThread (this).execute (key);
 	}
+	*/
 	
 	public void openGridList () {
 		
@@ -181,98 +192,5 @@ public class MainActivity extends Activity implements OnClickListener {
 		Intent it = new Intent ();
 		it.setClass (MainActivity.this, GridListActivity.class);
 		startActivity (it);
-	}
-	
-	// @lfred inner working class
-	private static class WorkThread extends AsyncTask<String, Void, Integer> {
-		
-		MainActivity ctx;
-		
-	    private WorkThread (MainActivity act) {
-	    	ctx = act;
-	    }
-		
-		// @lfred: this will be called in the UI thread.
-		@Override
-		protected void onPostExecute (Integer result) {
-			
-			Log.i (M_LOG_TAG, "WorkThread: onPostExecute");
-			MainActivity.m_progDialog.dismiss ();
-			
-			if (result.intValue() != 0) {
-				Log.i (M_LOG_TAG, "onPostExecute - error");
-			} else {
-				ctx.openGridList ();
-			}
-				
-			return;
-		}
-
-		@Override
-		protected Integer doInBackground (String... params) {
-			
-			if (params.length == 0) 
-				return -1;
-			
-			String url = makeUrl (params);
-			int returnCode = 0;
-			
-			// @lfred: new
-			try {
-				
-				// Step 1. get the XML file using REST
-				String tempPath = null;
-				File outFile = File.createTempFile ("result", ".xml");
-				FileOutputStream f = new FileOutputStream (outFile);
-				
-				URL u = new URL (url);
-			    HttpURLConnection c = (HttpURLConnection) u.openConnection ();
-			    c.setRequestMethod ("GET");
-			    c.setDoOutput (true);
-			    c.connect ();
-			    
-			    InputStream in = c.getInputStream ();
-
-			    byte[] buffer = new byte[1024];
-			    int len = 0;
-			    int total_len = 0;
-			    
-			    while ((len = in.read (buffer)) != -1) {
-			         f.write (buffer, 0, len);
-			         total_len += len;
-			    }
-			    
-			    Log.i (M_LOG_TAG, "Total length = " + Integer.toString (total_len));
-
-			    f.close ();
-			    tempPath = outFile.getAbsolutePath ();
-			    in.close ();
-			    
-			    Log.i (M_LOG_TAG, "XML file path: " + tempPath);
-			    
-			    //parseXml (new File)
-			    FileInputStream fin = new FileInputStream (tempPath);
-			    XmlParser.parseXml (fin); 
-			    fin.close ();  
-			    
-			    // load first 30 images
-			    
-				
-			} catch (Exception e) {
-				Log.i (M_LOG_TAG, "Ooops, IO exception");
-				returnCode = -1;
-				
-			}
-			
-			Log.i (M_LOG_TAG, "I am a worker:" + params[0]);
-			return returnCode;
-		}
-		
-		String makeUrl (String... params) {
-			
-			String url = searchRepo.getRepo ().generateSearchUri (params);
-			Log.i (M_LOG_TAG, "the query URL: " + url);
-			return url;
-		}			
-	}
+	}	
 }

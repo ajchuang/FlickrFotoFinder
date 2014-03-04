@@ -1,8 +1,10 @@
 package com.example.picfinder;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import android.util.Log;
 import android.util.Xml;
@@ -11,6 +13,7 @@ public class XmlParser {
 	
 	static final String M_LOG_TAG = "@lfred_xml";
 	static int m_photoCounter = 0;
+	static int m_curPage;
 
 	static public boolean parseXml (InputStream in) {
 		
@@ -49,9 +52,19 @@ public class XmlParser {
 		return false;
 	}
 	
-	static public boolean readHeader (XmlPullParser parser) throws Exception {
+	static public boolean readHeader (XmlPullParser parser) {
 		
-		parser.require (XmlPullParser.START_TAG, null, "photos");
+		try {
+			parser.require (XmlPullParser.START_TAG, null, "photos");
+		} catch (XmlPullParserException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			Log.i (M_LOG_TAG, "Flickr gets drunk.1");
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			Log.i (M_LOG_TAG, "Flickr gets drunk.2");
+		}
 		
 		String tag = parser.getName ();
 		if (tag.equals ("photos")) {
@@ -60,30 +73,40 @@ public class XmlParser {
 			String perPage = parser.getAttributeValue (null, "perpage");
 			String total   = parser.getAttributeValue (null, "total");
 			
+			m_curPage = Integer.parseInt (page);
 			Log.i (M_LOG_TAG, "Flickr says - photos : " + page + ":" + pages + ":" + perPage + ":" + total);
 			searchRepo repo = searchRepo.getRepo ();
-			repo.setXmlStat (
-				Integer.parseInt (total), 
-				Integer.parseInt (pages), 
-				Integer.parseInt (page), 
-				Integer.parseInt (perPage));
+			
+			try {
+				repo.setXmlStat (
+						Integer.parseInt (total), 
+						Integer.parseInt (pages), 
+						Integer.parseInt (page), 
+						Integer.parseInt (perPage));
+			} catch (Exception e) {
+				Log.i (M_LOG_TAG, "Flickr gets drunk.");
+			}
 		}
 		
-	    while (parser.next () != XmlPullParser.END_TAG) {
-	    	
-	        if (parser.getEventType() != XmlPullParser.START_TAG) {
-	            continue;
-	        }
-	        String name = parser.getName ();
-	        
-	        // Starts by looking for the entry tag
-	        if (name.equals ("photo")) {	
-	        	readPhoto (parser);		
-	        	parser.nextTag ();
-	        } else {
-	            skip (parser);
-	        }
-	    }
+		try {
+		    while (parser.next () != XmlPullParser.END_TAG) {
+		    	
+		        if (parser.getEventType() != XmlPullParser.START_TAG) {
+		            continue;
+		        }
+		        String name = parser.getName ();
+		        
+		        // Starts by looking for the entry tag
+		        if (name.equals ("photo")) {	
+		        	readPhoto (parser);		
+		        	parser.nextTag ();
+		        } else {
+		            skip (parser);
+		        }
+		    }
+		} catch (Exception eee) {
+			Log.i (M_LOG_TAG, "Flickr gets drunk.3");
+		}
 	    
 		return true;
 	}
@@ -96,7 +119,7 @@ public class XmlParser {
 		String secret   = parser.getAttributeValue (null, "secret");
 		String server 	= parser.getAttributeValue (null, "server");
 		String farm   	= parser.getAttributeValue (null, "farm");				
-		Log.i (M_LOG_TAG, "Flickr says - photos : " + id + ":" + secret + ":" + server + ":" + farm);
+		//Log.i (M_LOG_TAG, "Flickr says - photos : " + id + ":" + secret + ":" + server + ":" + farm);
 		
 		addUrlForThumbNail (id, secret, server, farm);
 		//parser.require (XmlPullParser.END_TAG, null, "photo");
@@ -128,7 +151,8 @@ public class XmlParser {
 	static public void addUrlForThumbNail (String id, String secret, String server, String farm) {
 		
 		String url = "http://farm" + farm + ".staticflickr.com/" + server + "/" + id + "_" + secret + "_m.jpg";
-		searchRepo.getRepo ().addNewUrl (url, m_photoCounter);
+		//Log.i (M_LOG_TAG, "Flickr says:" + url);
+		searchRepo.getRepo ().addNewUrl (url, m_curPage, m_photoCounter);
 		m_photoCounter++;
 		return;
 	}

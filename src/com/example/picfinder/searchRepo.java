@@ -7,7 +7,7 @@ import android.util.Log;
 
 public class searchRepo {
 
-	public final static int per_page = 30;
+	public final static int per_page = 100;
 	final static String M_LOG_TAG = "@lfred_repo";
 	final static String m_searchUrl_1 = 
 			"http://api.flickr.com/services/rest/?method=flickr.photos.search&" + 
@@ -24,13 +24,11 @@ public class searchRepo {
 	
 	// REST API result
 	int	m_totalResult;
-	int m_currentPage;		// count from 1
+	//int m_currentPage;		// count from 1
 	int m_totalPage;
 	int m_resultPerPage;
 	
-	// Result of current parsed XML data -> data in this page
-	Vector<String> m_urls;	// start from 0
-	Vector<Bitmap> m_bitmap;
+	cacheInventory m_cache;
 	
 	public static searchRepo getRepo () {
 		
@@ -43,24 +41,24 @@ public class searchRepo {
 	
 	// singleton trick!
 	private searchRepo () {
-		m_urls = new Vector<String> (per_page);
-		m_bitmap = new Vector<Bitmap> (per_page);
-		m_keyword = new Vector<String> ();
+		//m_urls 		= new Vector<String> (per_page);
+		//m_bitmap 	= new Vector<Bitmap> (per_page);
+		m_keyword 	= new Vector<String> ();
+		m_cache     = new cacheInventory (per_page); 
 		
 		// REST API result
 		m_totalResult = 0;
-		m_currentPage = 1;		// count from 1
+		//m_currentPage = 1;		// count from 1
 		m_totalPage = 0;
-		m_resultPerPage = 0;
+		m_resultPerPage = per_page;
 	}
 	
-	public void setKeyword (String... kw) {
+	public void setKeyword (String kw) {
 		
-		if (kw.length == 0)
+		if (kw.length () == 0)
 			return;
 		else {
-			for (int i=0; i<kw.length; ++i)
-				m_keyword.add (new String (kw[i]));
+			m_keyword.add (new String (kw));
 		}
 	}
 	
@@ -68,19 +66,18 @@ public class searchRepo {
 		return m_keyword;
 	}
 	
-	public String generateSearchUri (String... params) {
+	public String generateSearchUri (int global_idx) {
 		
-		if (params.length == 0)
-			return null;
+		// generate keyword
+		String searchKeyWords = new String (m_keyword.elementAt (0));
 		
-		setKeyword (params);
-		String searchKeyWords = new String (params[0]);
+		for (int i=1; i<m_keyword.size(); ++i)
+			searchKeyWords = searchKeyWords + "," + m_keyword.elementAt (i);
 		
-		for (int i=1; i<params.length; ++i)
-			searchKeyWords = searchKeyWords + "," + params[i];
-		
-		String url = m_searchUrl_1 + searchKeyWords + m_searchUrl_2 + Integer.toString (m_currentPage);
-		
+		// calculate page
+		int local_idx = global_idx % m_resultPerPage;
+		int currentPage = (global_idx - local_idx) / m_resultPerPage + 1;
+		String url = m_searchUrl_1 + searchKeyWords + m_searchUrl_2 + Integer.toString (currentPage);
 		Log.i (M_LOG_TAG, "the query URL: " + url);
 		return url;
 	}
@@ -88,7 +85,6 @@ public class searchRepo {
 	public void setXmlStat (int total, int tPage, int cPage, int perPage) {
 		
 		m_totalResult	= total;
-		m_currentPage	= cPage;
 		m_totalPage		= tPage;
 		m_resultPerPage = perPage;
 	}
@@ -97,44 +93,46 @@ public class searchRepo {
 		return m_totalResult;
 	}
 	
-	public void addNewUrl (String url, int local_idx) {
-		Log.i (M_LOG_TAG, "addNewUrl: " + url);
-		m_urls.add (local_idx, url);
+	public void addNewUrl (String url, int page_num, int local_idx) {
+		Log.i (M_LOG_TAG, "addNewUrl:" + Integer.toString (page_num) + ":" + Integer.toString (local_idx));
+		m_cache.addUrlAt (page_num, local_idx, url);
 	}
 	
 	public String getUrlAt (int total_idx) {
 		
-		// check if the data in the range
-		int min = (m_currentPage - 1) * m_resultPerPage;
-		int max = (m_currentPage == m_totalPage) ? (m_totalResult - 1): (min + m_resultPerPage - 1);
-		
-		if (total_idx < min || total_idx > max) {
-			Log.i (M_LOG_TAG, "getUrlAt - out of bound");
-			return null;
-		} else {
-			return m_urls.elementAt (total_idx - min);
-		}
+		int local_idx = total_idx % per_page;
+		int page_idx = (total_idx - local_idx) / per_page + 1;
+		Log.i (M_LOG_TAG, "getUrlAt:" + Integer.toString (page_idx) + ":" + Integer.toString (local_idx));	
+		return m_cache.getUrlAt (page_idx, local_idx);
 	}
 	
-	public void addBitmap (Bitmap bitmap, int local_idx) {
-		m_bitmap.add (local_idx, bitmap);
+	public void addBitmap (Bitmap bitmap, int page_num, int local_idx) {
+		Log.i (M_LOG_TAG, "addBitmap:" + Integer.toString (page_num) + ":" + Integer.toString (local_idx));
+		m_cache.addBitmapAt (page_num, local_idx, bitmap);
 	}
 	
 	public Bitmap getBitmapAt (int total_idx) {
 		
-		// check if the data in the range
-		int min = (m_currentPage - 1) * m_resultPerPage;
-		int max = (m_currentPage == m_totalPage) ? (m_totalResult - 1) : (min + m_resultPerPage - 1);
+		int local_idx = total_idx % per_page;
+		int page_idx = (total_idx - local_idx) / per_page + 1;
+		Log.i (M_LOG_TAG, "getBitmapAt:" + Integer.toString (page_idx) + ":" + Integer.toString (local_idx));	
+		return m_cache.getBitmapAt (page_idx, local_idx);
+	}
+	
+	public void resetRepo () {
 		
-		if (total_idx < min || total_idx > max) {
-			Log.i (M_LOG_TAG, "getUrlAt - out of bound");
-			return null;
-		} else {
-			int local_idx = total_idx - min;
-			if (local_idx >= m_bitmap.size())
-				return null;
-			else
-				return m_bitmap.elementAt (total_idx - min);
-		}
+		Log.i (M_LOG_TAG, "resetRepo");
+	
+		// provided by main activity
+		m_keyword.clear ();
+		
+		// REST API result
+		m_totalResult = 0;
+		//m_currentPage = 1;		// count from 1
+		m_totalPage = 0;
+		m_resultPerPage = per_page;
+		
+		// Result of current parsed XML data -> data in this page
+		m_cache.clear ();
 	}
 }

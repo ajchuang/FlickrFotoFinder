@@ -5,12 +5,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 
+import android.app.ActionBar.LayoutParams;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -20,11 +22,11 @@ public class ImageAdapter extends BaseAdapter {
 	//private static final String InputStream = null;
 	private static final String M_LOG_TAG = "@lfred_img";
 	// data member
-	GridListActivity m_context;
+	GridListActivity m_parentAct;
 
 	// Constructor
 	public ImageAdapter (GridListActivity c) {
-		m_context = c;
+		m_parentAct = c;
 	}
 
 	@Override
@@ -48,17 +50,20 @@ public class ImageAdapter extends BaseAdapter {
 	@Override
 	public View getView (int position, View convertView, ViewGroup parent) {
 		
+		Log.i (M_LOG_TAG, "getView request @" + Integer.toString (position));
 		ImageView imageView;
-		Log.i (M_LOG_TAG, "getView @" + Integer.toString (position));
-		
-		// @lfred: handle out-of-range
-		//if (position > )
 		
 		if (convertView == null) {
-			imageView = new ImageView (m_context);
+			imageView = new ImageView (m_parentAct);
 			imageView.setLayoutParams (new GridView.LayoutParams (150, 150));
-			imageView.setScaleType (ImageView.ScaleType.CENTER_CROP);
-			//imageView.setPadding(8, 8, 8, 8);
+			imageView.setScaleType (ImageView.ScaleType.FIT_XY);
+			
+			int height = parent.getHeight();
+			if (height > 0) {
+				android.view.ViewGroup.LayoutParams layoutParams = (android.view.ViewGroup.LayoutParams) imageView.getLayoutParams();
+				layoutParams.height = 150; //(int) (height / rowsCount);
+			}        
+			
 		} else {
 			imageView = (ImageView) convertView;
 		}
@@ -67,6 +72,14 @@ public class ImageAdapter extends BaseAdapter {
 		
 		if (bmp != null)
 			imageView.setImageBitmap (bmp);
+		else {
+			
+			if (position != 0) {
+				// load the new page
+				Log.i (M_LOG_TAG, "getView miss @" + Integer.toString (position));
+				m_parentAct.startImgLoaderTask (position);
+			}
+		}
 		
 		return imageView;
 	}
