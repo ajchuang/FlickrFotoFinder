@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
 
@@ -83,6 +84,14 @@ public class GridListActivity extends Activity implements OnItemClickListener {
 		// clean members
 		m_progDialog.dismiss ();
 		m_slaveThread = null;
+		
+		if (searchRepo.getRepo().getTotalCount() == 0) {
+			Toast t  = Toast.makeText (this, "Empty Search Result", Toast.LENGTH_LONG);
+			t.show ();
+			
+			finish ();
+			return;
+		}
 		
 		
 		if (m_adapter == null) {

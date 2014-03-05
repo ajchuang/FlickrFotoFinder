@@ -8,35 +8,46 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity" >
 
-    <EditText
-        android:id="@+id/keywordText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="80dp"
-        android:ems="10"
-        android:inputType="text" />
-
     <Button
         android:id="@+id/searchBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/keywordText"
         android:layout_alignRight="@+id/keywordText"
-        android:layout_below="@+id/keywordText"
-        android:layout_marginTop="20dp"
+        android:layout_centerVertical="true"
         android:text="@string/searchString" />
 
-    <Button
-        android:id="@+id/contactBtn"
+    <EditText
+        android:id="@+id/keywordText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/searchBtn"
-        android:layout_alignRight="@+id/searchBtn"
-        android:layout_below="@+id/searchBtn"
-        android:layout_marginTop="100dp"
-        android:text="@string/contactString" />
+        android:layout_above="@+id/searchBtn"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="14dp"
+        android:ems="10"
+        android:inputType="text" >
+
+        <requestFocus />
+    </EditText>
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="200dp"
+        android:layout_height="100dp"
+        android:layout_above="@+id/keywordText"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:contentDescription="@string/InitValue"
+        android:src="@drawable/flickr" />
+
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignBottom="@+id/imageView1"
+        android:layout_alignRight="@+id/keywordText"
+        android:contentDescription="@string/InitValue"
+        android:src="@drawable/find" />
 
     <TextView
         android:id="@+id/textView1"
@@ -44,8 +55,18 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/searchBtn"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="38dp"
+        android:layout_marginTop="16dp"
         android:text="@string/or"
         android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <Button
+        android:id="@+id/contactBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/imageView1"
+        android:layout_alignRight="@+id/searchBtn"
+        android:layout_below="@+id/textView1"
+        android:layout_marginTop="14dp"
+        android:text="@string/contactString" />
 
 </RelativeLayout>

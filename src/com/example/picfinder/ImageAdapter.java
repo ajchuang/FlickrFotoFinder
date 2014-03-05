@@ -47,12 +47,13 @@ public class ImageAdapter extends BaseAdapter {
 		if (convertView == null) {
 			imageView = new ImageView (m_parentAct);
 			imageView.setLayoutParams (new GridView.LayoutParams (150, 150));
-			imageView.setScaleType (ImageView.ScaleType.FIT_XY);
+			imageView.setScaleType (ImageView.ScaleType.CENTER_CROP);
 			
 			int height = parent.getHeight();
 			if (height > 0) {
 				android.view.ViewGroup.LayoutParams layoutParams = (android.view.ViewGroup.LayoutParams) imageView.getLayoutParams();
-				layoutParams.height = 150; //(int) (height / rowsCount);
+				layoutParams.height = 270; //(int) (height / rowsCount);
+				layoutParams.width = 360;
 			}        
 			
 		} else {
@@ -71,6 +72,8 @@ public class ImageAdapter extends BaseAdapter {
 				m_parentAct.startImgLoaderTask (position);
 			}
 		}
+		
+		
 		
 		return imageView;
 	}
