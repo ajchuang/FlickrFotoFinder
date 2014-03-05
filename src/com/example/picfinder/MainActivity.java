@@ -12,26 +12,11 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import android.util.*;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.provider.*;
 
-import android.os.AsyncTask;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.*;
 import java.util.StringTokenizer;
-
-// Sample code: show image from internet in the image viewer
-// Note: Need user permission -> INTERNET
-// try {
-// Bitmap bt = BitmapFactory.decodeStream (InputStream new URL (url).getContent ());
-// } catch (Exception e) {
-// }
 
 public class MainActivity extends Activity implements OnClickListener {
 	
@@ -46,7 +31,8 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onCreate (savedInstanceState);
 		
 		setContentView(R.layout.activity_main);
-		
+		getActionBar().setTitle("Flickr Finder");   
+
 		Button searchBtn = (Button) findViewById (R.id.searchBtn);
 		searchBtn.setOnClickListener (this);
 		
@@ -173,17 +159,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		
 		Log.i (M_LOG_TAG, "return from activity");
 	}
-	
-	/*
-	void startSearchTask (String key) {
-		m_progDialog = 
-			ProgressDialog.show (MainActivity.this, "Please wait ...", "Searching Data ...", true);					
-		m_progDialog.setCancelable (false);
-			
-		// start the worker thread
-		new WorkThread (this).execute (key);
-	}
-	*/
 	
 	public void openGridList () {
 		

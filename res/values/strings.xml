@@ -4,8 +4,12 @@
     <string name="app_name">PicFinder</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-    <string name="searchString">Search</string>
-    <string name="contactString">Contact</string>
+    <string name="searchString">Search Keyword</string>
+    <string name="contactString">Select Contact</string>
     <string name="title_activity_grid_list">GridListActivity</string>
+    <string name="title_activity_detailed_view">DetailedViewActivity</string>
+    <string name="InitValue">InitValue</string>
+    <string name="or">or</string>
+    <string name="OpenBrowser">Open Browser</string>
 
 </resources>

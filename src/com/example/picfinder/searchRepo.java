@@ -7,14 +7,14 @@ import android.util.Log;
 
 public class searchRepo {
 
-	public final static int per_page = 100;
+	public final static int per_page = SysParam.M_PER_PAGE;
 	final static String M_LOG_TAG = "@lfred_repo";
 	final static String m_searchUrl_1 = 
 			"http://api.flickr.com/services/rest/?method=flickr.photos.search&" + 
 			"api_key=278c507b03fa3a089af0a5972f83a8e4&tags=";
 	
 	final static String m_searchUrl_2 = "&per_page=" + Integer.toString(per_page) + "&page=";	
-			//"&extras=date_taken,owner_name,description";
+	final static String m_searchUrl_3 = "&extras=date_taken,owner_name,description";
 	
 	// The repo
 	static searchRepo m_theRepo = null;
@@ -24,7 +24,6 @@ public class searchRepo {
 	
 	// REST API result
 	int	m_totalResult;
-	//int m_currentPage;		// count from 1
 	int m_totalPage;
 	int m_resultPerPage;
 	
@@ -77,7 +76,7 @@ public class searchRepo {
 		// calculate page
 		int local_idx = global_idx % m_resultPerPage;
 		int currentPage = (global_idx - local_idx) / m_resultPerPage + 1;
-		String url = m_searchUrl_1 + searchKeyWords + m_searchUrl_2 + Integer.toString (currentPage);
+		String url = m_searchUrl_1 + searchKeyWords + m_searchUrl_2 + Integer.toString (currentPage) + m_searchUrl_3;
 		Log.i (M_LOG_TAG, "the query URL: " + url);
 		return url;
 	}
@@ -89,14 +88,24 @@ public class searchRepo {
 		m_resultPerPage = perPage;
 	}
 	
+	public void allocCache (int pageNum) {
+		m_cache.allocCache (pageNum);
+	}
+	
 	public int getTotalCount () {
 		return m_totalResult;
 	}
 	
+	public void insertNewData (singleData d, int page_num) {
+		m_cache.insertSingleData (page_num, d);
+	}
+	
+	/*
 	public void addNewUrl (String url, int page_num, int local_idx) {
 		Log.i (M_LOG_TAG, "addNewUrl:" + Integer.toString (page_num) + ":" + Integer.toString (local_idx));
 		m_cache.addUrlAt (page_num, local_idx, url);
 	}
+	*/
 	
 	public String getUrlAt (int total_idx) {
 		
@@ -117,6 +126,12 @@ public class searchRepo {
 		int page_idx = (total_idx - local_idx) / per_page + 1;
 		Log.i (M_LOG_TAG, "getBitmapAt:" + Integer.toString (page_idx) + ":" + Integer.toString (local_idx));	
 		return m_cache.getBitmapAt (page_idx, local_idx);
+	}
+	
+	public singleData getDataObject (int total_idx) {
+		int local_idx = total_idx % per_page;
+		int page_idx = (total_idx - local_idx) / per_page + 1;
+		return m_cache.getDataObject (page_idx, local_idx);
 	}
 	
 	public void resetRepo () {

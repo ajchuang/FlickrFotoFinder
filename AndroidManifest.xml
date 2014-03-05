@@ -28,6 +28,10 @@
             android:name="com.example.picfinder.GridListActivity"
             android:label="@string/title_activity_grid_list" >
         </activity>
+        <activity
+            android:name="com.example.picfinder.DetailedViewActivity"
+            android:label="@string/title_activity_detailed_view" >
+        </activity>
     </application>
 
 </manifest>

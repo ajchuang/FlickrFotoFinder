@@ -78,6 +78,7 @@ public class XmlParser {
 			searchRepo repo = searchRepo.getRepo ();
 			
 			try {
+				repo.allocCache (Integer.parseInt (page));
 				repo.setXmlStat (
 						Integer.parseInt (total), 
 						Integer.parseInt (pages), 
@@ -85,6 +86,7 @@ public class XmlParser {
 						Integer.parseInt (perPage));
 			} catch (Exception e) {
 				Log.i (M_LOG_TAG, "Flickr gets drunk.");
+				e.printStackTrace ();
 			}
 		}
 		
@@ -98,33 +100,97 @@ public class XmlParser {
 		        
 		        // Starts by looking for the entry tag
 		        if (name.equals ("photo")) {	
-		        	readPhoto (parser);		
-		        	parser.nextTag ();
+		        	readPhoto (parser);
+		        	Log.i (M_LOG_TAG, "Flickr found photo");
+		        	
+		        	// consume myself?
+		        	parser.require (XmlPullParser.END_TAG, null, "photo");
 		        } else {
 		            skip (parser);
 		        }
 		    }
 		} catch (Exception eee) {
 			Log.i (M_LOG_TAG, "Flickr gets drunk.3");
+			eee.printStackTrace ();
 		}
 	    
 		return true;
 	}
 	
-	static public boolean readPhoto (XmlPullParser parser) throws Exception {
+	static public boolean readPhoto (XmlPullParser parser) {
 	
-		parser.require (XmlPullParser.START_TAG, null, "photo");
+		try {
+			parser.require (XmlPullParser.START_TAG, null, "photo");
 		
-    	String id    	= parser.getAttributeValue (null, "id");
-		String secret   = parser.getAttributeValue (null, "secret");
-		String server 	= parser.getAttributeValue (null, "server");
-		String farm   	= parser.getAttributeValue (null, "farm");				
-		//Log.i (M_LOG_TAG, "Flickr says - photos : " + id + ":" + secret + ":" + server + ":" + farm);
-		
-		addUrlForThumbNail (id, secret, server, farm);
-		//parser.require (XmlPullParser.END_TAG, null, "photo");
-		
+	    	String id    	 = parser.getAttributeValue (null, "id");
+			String secret    = parser.getAttributeValue (null, "secret");
+			String server 	 = parser.getAttributeValue (null, "server");
+			String farm   	 = parser.getAttributeValue (null, "farm");	
+			String date		 = parser.getAttributeValue (null, "datetaken");
+			String ownername = parser.getAttributeValue (null, "ownername");
+			
+			Log.i (M_LOG_TAG, "Flickr photo : " + id + ":" + secret + ":" + server + ":" + farm);
+			
+			String des = "description"; //readDescription (parser);
+			
+			while (parser.next() != XmlPullParser.END_TAG) {
+		        if (parser.getEventType() != XmlPullParser.START_TAG) {
+		            continue;
+		        }
+		        String name = parser.getName();
+		        if (name.equals ("description")) {
+		            des = readDescription (parser);
+		        } else {
+		            skip (parser);
+		        }
+		    } 
+			
+			// @lfred: create the data object, and add to the repo.
+			singleData d = 
+				new singleData (
+					m_curPage,
+					m_photoCounter,
+					id,
+					secret,
+					server,
+					farm,
+					des,
+					date,
+					ownername);
+			
+			searchRepo.getRepo().insertNewData (d, m_curPage); 
+			m_photoCounter++;
+			
+		} catch (Exception e) {
+			Log.i (M_LOG_TAG, "Flickr gets drunk.4");
+			e.printStackTrace ();
+		}
 		return true;
+	}
+	
+	static String readDescription (XmlPullParser parser) {
+		
+		String des = null;
+		try {
+			parser.require (XmlPullParser.START_TAG, null, "description");
+			des = readText(parser);
+			parser.require (XmlPullParser.END_TAG, null, "description");
+		} catch (Exception e) {
+			return null;
+		}
+		
+	    return des;
+	}
+	
+	// For the tags title and summary, extracts their text values.
+	static String readText (XmlPullParser parser) throws Exception {
+	    String result = "";
+	    if (parser.next() == XmlPullParser.TEXT) {
+	        result = parser.getText();
+	        parser.nextTag();
+	    }
+	    
+	    return result;
 	}
 	
 	static public boolean skip (XmlPullParser parser) throws Exception {
@@ -147,14 +213,4 @@ public class XmlParser {
 	    }
 		return true;
 	}
-	
-	static public void addUrlForThumbNail (String id, String secret, String server, String farm) {
-		
-		String url = "http://farm" + farm + ".staticflickr.com/" + server + "/" + id + "_" + secret + "_m.jpg";
-		//Log.i (M_LOG_TAG, "Flickr says:" + url);
-		searchRepo.getRepo ().addNewUrl (url, m_curPage, m_photoCounter);
-		m_photoCounter++;
-		return;
-	}
-	
 }

@@ -13,13 +13,17 @@ import android.os.Bundle;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
 
-public class GridListActivity extends Activity {
+public class GridListActivity extends Activity implements OnItemClickListener {
 	
 	// UI members - used to manipulate things later
 	ImageAdapter 	m_adapter;
@@ -38,6 +42,7 @@ public class GridListActivity extends Activity {
 	protected void onCreate (Bundle savedInstanceState) {
 		super.onCreate (savedInstanceState);
 		setContentView (R.layout.activity_grid_list);
+		getActionBar().setTitle("Gallery");
 		
 		// control components;
 		m_repo = searchRepo.getRepo ();
@@ -84,6 +89,8 @@ public class GridListActivity extends Activity {
 			m_gridview = (GridView) findViewById (R.id.gridview_main);
 			m_adapter = new ImageAdapter (this); 
 		    m_gridview.setAdapter (m_adapter);
+		    m_gridview.setOnItemClickListener (this);
+		    
 		} else {
 		
 			// update the list view
@@ -91,20 +98,32 @@ public class GridListActivity extends Activity {
 		}
 	}
 	
+	public void onItemClick (AdapterView<?> adapter, View v, int position, long arg3) {  
+		
+		log ("item selected: " + Integer.toString (position));
+		
+		
+		// Open new detailed windows
+		Intent it = new Intent ();
+		it.setClass (GridListActivity.this, DetailedViewActivity.class);
+		it.putExtra ("TheSelectedItem", position);
+		startActivity (it);
+	}
+	
 	// @lfred inner working class
 	private static class ImgLoaderThread extends AsyncTask<Void, Void, Void> {
 
 		private static final String M_LOG_TAG = "@lfred_ldr";
 		GridListActivity m_act;
-		ImageAdapter m_adpt;
+		//ImageAdapter m_adpt;
 		int m_globalPosition;
 		int m_curPage;
 		
 		public ImgLoaderThread (GridListActivity act, ImageAdapter adpt, int global_position) {
 			m_act = act;
-			m_adpt = adpt;
+			//m_adpt = adpt;
 			m_globalPosition = global_position;
-			m_curPage = (global_position - (global_position%100))/100 + 1; 
+			m_curPage = (global_position - (global_position%SysParam.M_PER_PAGE))/SysParam.M_PER_PAGE + 1; 
 		}
 		
 		@Override
